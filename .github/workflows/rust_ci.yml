@@ -1,0 +1,44 @@
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/Cargo.*"
+      - "**/*.rs"
+      - "**/*.proto"
+  pull_request:
+      branches:
+        - main
+      paths:
+        - "**/Cargo.*"
+        - "**/*.rs"
+        - "**/*.proto"
+
+name: Rust Checks
+
+jobs:
+  build:
+      name: Build
+      needs: check
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - uses: Swatinem/rust-cache@v2
+          with:
+            shared-key: "rust-ci"
+            cache-directories: "${{ github.workspace }}/.cargo"
+        - uses: actions-rs/toolchain@v1
+          with:
+            toolchain: stable
+            target: thumbv7em-none-eabihf
+            override: true
+        - uses: actions-rs/cargo@v1
+          with:
+              command: build
+        - name: Cache .env file for next jobs
+          uses: actions/cache/save@v3
+          id: cache
+          with:
+            use-cross: true
+            path: .env
+            key: dot-env-${{ github.run_id }}
